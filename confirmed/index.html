@@ -489,9 +489,9 @@ Capital:   Equity, SBIC &amp; Mezz</code></div>
       Meta Pixel or Google tag sitewide, leave the matching ID blank
       here and fire the conversion from GTM instead, so it isn't counted twice. */
 var OS_TRACKING = {
-  META_PIXEL_ID: "",            // e.g. "123456789012345"
-  GOOGLE_ADS_ID: "",            // e.g. "AW-1234567890"
-  GOOGLE_ADS_LABEL: ""          // e.g. "AbCdEfGhIjKlMnOp"
+  META_PIXEL_ID: "",                  // Meta Pixel ID, e.g. "123456789012345" (added separately)
+  GOOGLE_ADS_ID: "AW-18161038602",    // OutSearched Google Ads tag
+  GOOGLE_ADS_LABEL: ""                // Optional. Blank = Google Ads counts this page by its URL rule.
 };
 (function(cfg){
   var q = new URLSearchParams(location.search);
@@ -499,24 +499,31 @@ var OS_TRACKING = {
   var key = "os_conv_" + (bookingId || "nobooking");
   var already = false;
   try{ already = !!localStorage.getItem(key); }catch(e){}
-  if(already) return;                       // refresh-safe: one conversion per booking
-  var fired = false;
 
+  /* Google tag loads on every visit. Google Ads counts the booking with the
+     "page load" conversion rule for this URL (set to Count: One per ad click),
+     and the tag reads the ad-click cookie saved on outsearched.com. */
+  if(cfg.GOOGLE_ADS_ID){
+    var s=document.createElement('script'); s.async=true; s.src='https://www.googletagmanager.com/gtag/js?id='+cfg.GOOGLE_ADS_ID; document.head.appendChild(s);
+    window.dataLayer=window.dataLayer||[]; window.gtag=function(){dataLayer.push(arguments);};
+    gtag('js', new Date());
+    gtag('config', cfg.GOOGLE_ADS_ID);
+    if(cfg.GOOGLE_ADS_LABEL && !already){
+      gtag('event','conversion',{send_to: cfg.GOOGLE_ADS_ID+'/'+cfg.GOOGLE_ADS_LABEL, transaction_id: bookingId});
+    }
+  }
+
+  /* Meta: one Schedule event per booking (refresh-safe). */
   if(cfg.META_PIXEL_ID){
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', cfg.META_PIXEL_ID);
     fbq('track', 'PageView');
-    fbq('track', 'Schedule', {content_name: q.get("event_type_name") || "Strategy Call"}, bookingId ? {eventID: bookingId} : undefined);
-    fired = true;
+    if(!already){
+      fbq('track', 'Schedule', {content_name: q.get("event_type_name") || "Strategy Call"}, bookingId ? {eventID: bookingId} : undefined);
+    }
   }
-  if(cfg.GOOGLE_ADS_ID && cfg.GOOGLE_ADS_LABEL){
-    var s=document.createElement('script'); s.async=true; s.src='https://www.googletagmanager.com/gtag/js?id='+cfg.GOOGLE_ADS_ID; document.head.appendChild(s);
-    window.dataLayer=window.dataLayer||[]; window.gtag=function(){dataLayer.push(arguments);};
-    gtag('js', new Date()); gtag('config', cfg.GOOGLE_ADS_ID);
-    gtag('event','conversion',{send_to: cfg.GOOGLE_ADS_ID+'/'+cfg.GOOGLE_ADS_LABEL, transaction_id: bookingId});
-    fired = true;
-  }
-  if(fired){ try{ localStorage.setItem(key, "1"); }catch(e){} }
+
+  if(!already && (cfg.META_PIXEL_ID || cfg.GOOGLE_ADS_LABEL)){ try{ localStorage.setItem(key, "1"); }catch(e){} }
 })(OS_TRACKING);
 </script>
 
