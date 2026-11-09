@@ -12,6 +12,9 @@ Files live in `/videos`. Filenames carry a version (`main-v1.mp4`), so a new cut
 - `main-v1.mp4`: main landing page video (1080p, captions burned in)
 - `main-v1-poster.jpg`: still shown before play
 - `main-v1.vtt`: transcript captions (optional, the video already shows captions)
+- `step1-v1.mp4`: Step 1 video, "Define your mandate and build the list" (1080p, 57s, captions burned in)
+- `step1-v1-poster.jpg`: still shown before play
+- `step1-v1.vtt`: transcript captions (optional, the video already shows captions)
 
 Embed (replace DOMAIN with the Vercel domain):
 
