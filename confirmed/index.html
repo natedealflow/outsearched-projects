@@ -497,6 +497,14 @@ var OS_TRACKING = {
   var q = new URLSearchParams(location.search);
   var bookingId = q.get("invitee_uuid") || "";
   var key = "os_conv_" + (bookingId || "nobooking");
+  /* Calendly puts the invitee's name, email, phone and answers in this page's address.
+     Remove them before the ad tags load, so no personal details are sent to Google or Meta. */
+  try{
+    var keep = new URLSearchParams();
+    ["invitee_uuid","event_start_time","event_end_time","event_type_name","utm_source","utm_medium","utm_campaign","utm_content","utm_term","gclid","fbclid"].forEach(function(k){ if(q.get(k)) keep.set(k, q.get(k)); });
+    var qs = keep.toString();
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+  }catch(e){}
   var already = false;
   try{ already = !!localStorage.getItem(key); }catch(e){}
 
